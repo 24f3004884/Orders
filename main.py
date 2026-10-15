@@ -163,7 +163,7 @@ def get_config(set: list[str] = Query(default=[])):
 
     # Mask api_key
     final_config["api_key"] = "****"
-    return final_config'''
+    return final_config
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -356,4 +356,4 @@ async def rate_limit_middleware(request: Request, call_next):
 # ---------- Health check (nice to have) ----------
 @app.get("/")
 def root():
-    return {"message": "Orders API is running", "total_orders": TOTAL_ORDERS}'''
+    return {"message": "Orders API is running", "total_orders": TOTAL_ORDERS}
