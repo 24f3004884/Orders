@@ -238,6 +238,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["Retry-After"],
 )
 
 # ---------- Config from the assignment ----------
@@ -324,29 +325,37 @@ def list_orders(
 # ---------- 3. Per-client rate limiting (middleware) ----------
 @app.middleware("http")
 async def rate_limit_middleware(request: Request, call_next):
+    # Always let OPTIONS (CORS preflight) through
+    if request.method == "OPTIONS":
+        return await call_next(request)
+
     client_id = request.headers.get("X-Client-Id")
 
-    # If no client id is sent we still let the request through
-    # (grader always sends it for the rate-limit tests)
     if client_id:
         now = time.time()
         bucket = rate_limit_buckets[client_id]
 
-        # Remove timestamps older than the 10-second window
+        # Drop timestamps older than the 10-second window
         while bucket and now - bucket[0] > WINDOW_SECONDS:
             bucket.popleft()
 
         if len(bucket) >= RATE_LIMIT:
-            # Too many requests → 429
-            retry_after = int(WINDOW_SECONDS - (now - bucket[0])) + 1
+            retry_after = max(1, int(WINDOW_SECONDS - (now - bucket[0])) + 1)
+
+            # IMPORTANT: include CORS headers so the browser can see the 429
+            origin = request.headers.get("Origin", "*")
             return Response(
                 content='{"detail":"Rate limit exceeded"}',
                 status_code=429,
-                headers={"Retry-After": str(retry_after)},
                 media_type="application/json",
+                headers={
+                    "Retry-After": str(retry_after),
+                    "Access-Control-Allow-Origin": origin,
+                    "Access-Control-Allow-Credentials": "true",
+                    "Access-Control-Expose-Headers": "Retry-After",
+                },
             )
 
-        # Record this request
         bucket.append(now)
 
     response = await call_next(request)
