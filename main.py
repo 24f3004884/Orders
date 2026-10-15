@@ -180,7 +180,7 @@ app = FastAPI()
 ALLOWED_ORIGIN = "https://app-zy93ko.example.com"
 # Also allow the exam page itself so the grader can test from the browser.
 # Replace this with the real exam origin if the platform shows you one.
-EXAM_ORIGIN = "https://exam.sanand.workers.dev/tds-2026-09-ga2"   # ← put the real one if you know it
+EXAM_ORIGIN = "https://exam.sanand.workers.dev"   # ← put the real one if you know it
 
 RATE_LIMIT = 15          # B = 15 requests
 WINDOW_SECONDS = 10      # every 10 seconds
